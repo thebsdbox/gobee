@@ -11,11 +11,11 @@ const ignore = `// +build ignore
 `
 
 // Compile will take the builder and turn it into some BPF code
-func (b *Builder) Compile() error {
+func (b *Builder) Write() error {
 
 	// Check code exists
 	if len(b.code) == 0 {
-		return fmt.Errorf("Unable to compile eBPF as no code has been generated")
+		return fmt.Errorf("unable to compile eBPF as no code has been generated")
 	}
 	var builtCode string
 	builtCode += ignore
@@ -28,10 +28,13 @@ func (b *Builder) Compile() error {
 	if err != nil {
 		return err
 	}
-
 	if b.removeSource {
 		// Remove the temporary files once compiled
 		defer os.Remove(f.Name())
+	} else {
+		// Store the filename for later
+		b.filename = f.Name()
+		os.Symlink(b.filename, b.symlink)
 	}
 
 	// Write the code to file
@@ -44,18 +47,22 @@ func (b *Builder) Compile() error {
 		return err
 	}
 
+	return nil
+}
+
+func (b *Builder) Compile() error {
 	var seq []string
 	seq = append(seq, "-o2")             // Optimize produced code output
 	seq = append(seq, "-g")              // Generate Debug output
 	seq = append(seq, "-Wall")           // Enable Warnings for All
 	seq = append(seq, "-target", "-bpf") // Output is bpf byte code
-	seq = append(seq, "-c", f.Name())    // Input file
+	seq = append(seq, "-c", b.filename)  // Input file
 	seq = append(seq, "-o", "bpf.o")     // Output file
 
 	// Compile the code into bpf code
 	out, err := exec.Command("clang", seq...).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Cannot compile : %v\n%v", err, string(out))
+		return fmt.Errorf("cannot compile : %v\n%v", err, string(out))
 	}
 	return nil
 }

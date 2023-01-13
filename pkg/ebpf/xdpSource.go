@@ -60,3 +60,6 @@ const xdpTCP = `    struct tcphdr *tcp = data + sizeof(struct ethhdr) + (ip->ihl
 	    return XDP_PASS;
     }
 `
+
+const xdpVar = `    %s %s = %s;
+`

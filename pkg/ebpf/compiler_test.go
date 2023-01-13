@@ -43,7 +43,7 @@ func TestBuilder_Compile(t *testing.T) {
 			b := &Builder{
 				code: tt.fields.code,
 			}
-			if err := b.Compile(); (err != nil) != tt.wantErr {
+			if err := b.Write(); (err != nil) != tt.wantErr {
 				t.Errorf("Builder.Compile() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
