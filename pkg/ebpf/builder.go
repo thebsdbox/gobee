@@ -1,21 +1,37 @@
 package ebpf
 
 import (
+	"bufio"
 	"fmt"
+	"io"
+	"log"
+	"os"
 )
 
 const codeLicense = `char _license[] SEC("license") = "%s";`
 
 // Builder contains everything required to build out our code
 type Builder struct {
-	code         string
-	removeSource bool
-	license      string
+	name         string // Name of the eBPF function
+	code         string // Holds the generated code
+	removeSource bool   // Remove any source code at the end of generating
+	license      string // Holds the license of the eBPF code
 	headers      string // Keeps track of all headers required
-	Debug        bool
+	Debug        bool   // Adds debug comments
+	written      bool   // Ensure we only need to write the code once
 	maps         string
-	filename     string
-	symlink      string
+	filename     string // Filename of generated source
+	symlink      string // symlink to latest version of generated source
+}
+
+// SetLicense will set the license for out BPF code
+func (b *Builder) SetFunctionName(name string) {
+	// Default to the GPL licence (TODO: Change this to something else)
+	if name == "" {
+		b.name = "example"
+	} else {
+		b.name = name
+	}
 }
 
 // SetLicense will set the license for out BPF code
@@ -50,3 +66,30 @@ const eBPFMap = `struct {
 // 	///objs := bpfObjects{}
 // 	//spec.LoadAndAssign()
 // }
+
+func readLines(r io.Reader) {
+	rd := bufio.NewReader(r)
+	lineNum := 1
+	for {
+		line, err := rd.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("%s", line)
+
+		lineNum++
+	}
+}
+
+func Trace() {
+	file, err := os.Open("/sys/kernel/debug/tracing/trace_pipe")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	readLines(file)
+}

@@ -1,18 +1,24 @@
 package ebpf
 
+import (
+	"fmt"
+	"net"
+	"os"
+)
+
 // XDP Contains the basic configuration for the generated XDP eBPF function
 type XDP struct {
 	Builder
-	ctx       bool
-	ethernet  bool
-	ip        bool
-	tcp       bool
-	udp       bool
-	returnVal int
-
-	postCode     string
-	IPVariables  []xdpvars
-	TCPVariables []xdpvars
+	ctx               bool
+	ethernet          bool
+	ip                bool
+	tcp               bool
+	udp               bool
+	returnVal         int
+	DetectedInterface net.Interface
+	postCode          string
+	IPVariables       []xdpvars
+	TCPVariables      []xdpvars
 }
 
 type xdpvars struct {
@@ -22,13 +28,19 @@ type xdpvars struct {
 }
 
 // NewXDP Creates a new XDP eBFP object that will be eventually built into a bpf program
-func NewXDP(license string, debug bool) *XDP {
+func NewXDP(name, license string, debug bool) (*XDP, error) {
 	b := Builder{}
 	b.Debug = debug
 	b.symlink = "xdp.c"
 	b.SetLicense(license)
-	x := XDP{Builder: b}
-	return &x
+	b.SetFunctionName(name)
+	// Find default interface
+	iface, _, err := GetNetConfig()
+	if err != nil {
+		return nil, err
+	}
+	x := XDP{Builder: b, DetectedInterface: iface}
+	return &x, nil
 }
 
 // AppendCode will add code to the bottom of the function
@@ -88,4 +100,34 @@ func (x *XDP) GetTCPSourcePort() {
 // Get destination port through variable dport
 func (x *XDP) GetTCPDestinationPort() {
 	x.TCPVariables = append(x.TCPVariables, xdpvars{varType: "int", varName: "tcp->dest", name: "dport"})
+}
+
+// This will generate actual eBPF code and associated wrappers, depends on GENERATE being set as an environment
+// variable, if set to true will also print the go wrapper to STDOUT
+func (x *XDP) Generate(printGo bool) error {
+	if !x.Builder.written {
+		err := x.Write()
+		if err != nil {
+			return err
+		}
+	}
+	if printGo {
+		fmt.Printf(xdpGoWrapper, x.name)
+
+	}
+	_, gen := os.LookupEnv("GENERATE")
+	if gen {
+		return x.Builder.Generate()
+	}
+	return nil
+}
+
+// This will generate actual eBPF code and associated wrappers, depends on GENERATE being set as an environment
+// variable
+func (x *XDP) Write() error {
+	_, gen := os.LookupEnv("GENERATE")
+	if gen {
+		return x.Builder.Write()
+	}
+	return nil
 }

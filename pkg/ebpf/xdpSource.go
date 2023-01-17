@@ -18,7 +18,7 @@ const xdpTCPHeader = `#include <linux/tcp.h>
 // Function code
 const xdpCode = `
 SEC("xdp")
-int  xdp_prog_simple(struct xdp_md *ctx)
+int  xdp_%s(struct xdp_md *ctx)
 {
 %s
 }
@@ -62,4 +62,25 @@ const xdpTCP = `    struct tcphdr *tcp = data + sizeof(struct ethhdr) + (ip->ihl
 `
 
 const xdpVar = `    %s %s = %s;
+`
+
+const xdpGoWrapper = `
+// Load pre-compiled programs into the kernel.
+objs := bpfObjects{}
+if err := loadBpfObjects(&objs, nil); err != nil {
+    log.Fatalf("loading objects: %%s", err)
+}
+defer objs.Close()
+
+// Attach the program.
+l, err := link.AttachXDP(link.XDPOptions{
+    Program:   objs.Xdp%s,
+    Interface: x.DetectedInterface.Index,
+})
+if err != nil {
+    log.Fatalf("could not attach XDP program: %%s", err)
+}
+defer l.Close()
+
+ebpf.Trace()
 `

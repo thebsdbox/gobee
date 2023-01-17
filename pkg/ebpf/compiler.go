@@ -10,9 +10,13 @@ const ignore = `// +build ignore
 
 `
 
-// Compile will take the builder and turn it into some BPF code
+// Compile will take the builder and convert into C eBPF code
 func (b *Builder) Write() error {
-
+	if b.written {
+		return nil
+	} else {
+		b.written = true
+	}
 	// Check code exists
 	if len(b.code) == 0 {
 		return fmt.Errorf("unable to compile eBPF as no code has been generated")
@@ -34,6 +38,8 @@ func (b *Builder) Write() error {
 	} else {
 		// Store the filename for later
 		b.filename = f.Name()
+		// remove the original symlink, to replace with a new one
+		os.Remove(b.symlink)
 		os.Symlink(b.filename, b.symlink)
 	}
 
@@ -64,5 +70,22 @@ func (b *Builder) Compile() error {
 	if err != nil {
 		return fmt.Errorf("cannot compile : %v\n%v", err, string(out))
 	}
+	return nil
+}
+
+func (b *Builder) Generate() error {
+	var seq []string
+	os.Setenv("GOPACKAGE", "main")
+	seq = append(seq, "run")                               // Enable Warnings for All
+	seq = append(seq, "github.com/cilium/ebpf/cmd/bpf2go") // Output is bpf byte code
+	seq = append(seq, "bpf")                               // Input file
+	seq = append(seq, b.symlink)                           // Output file
+
+	// Compile the code into bpf code
+	out, err := exec.Command("go", seq...).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("cannot compile : %v\n%v", err, string(out))
+	}
+	os.Exit(0)
 	return nil
 }

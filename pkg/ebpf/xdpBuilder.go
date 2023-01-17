@@ -6,7 +6,7 @@ import (
 )
 
 // Create will create the eBPF code
-func (x *XDP) Create() error {
+func (x *XDP) Create() {
 	var codeBuilder string
 	x.Builder.headers += xdpHeaders
 	if x.ctx {
@@ -35,7 +35,7 @@ func (x *XDP) Create() error {
 			codeBuilder += fmt.Sprintf("    // %s:%d\n", fname, fline)
 		}
 		if len(x.IPVariables) != 0 {
-			for y := range x.TCPVariables {
+			for y := range x.IPVariables {
 				codeBuilder += fmt.Sprintf(xdpVar, x.IPVariables[y].varType, x.IPVariables[y].name, x.IPVariables[y].varName)
 			}
 		}
@@ -65,7 +65,5 @@ func (x *XDP) Create() error {
 	}
 	codeBuilder += "    return XDP_PASS;"
 
-	x.Builder.code += fmt.Sprintf(xdpCode, codeBuilder)
-	return x.Builder.Write()
+	x.Builder.code += fmt.Sprintf(xdpCode, x.Builder.name, codeBuilder)
 }
-
