@@ -45,7 +45,7 @@ func NewXDP(name, license string, debug bool) (*XDP, error) {
 
 // AppendCode will add code to the bottom of the function
 func (x *XDP) AppendCode(code string) {
-	x.postCode += "    " + code
+	x.postCode += "    " + code + "\n"
 }
 
 // ParseContext will enable the code for parsing the eBPF context (ctx)
