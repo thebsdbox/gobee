@@ -85,6 +85,7 @@ func readLines(r io.Reader) {
 	}
 }
 
+// Trace will start a blocking stream debugging data to STDOUT
 func Trace() {
 	file, err := os.Open("/sys/kernel/debug/tracing/trace_pipe")
 	if err != nil {
