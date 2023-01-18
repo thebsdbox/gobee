@@ -3,6 +3,8 @@ package ebpf
 import (
 	"errors"
 	"net"
+	"os"
+	"time"
 )
 
 func GetNetConfig() (net.Interface, string, error) {
@@ -40,4 +42,12 @@ func GetNetConfig() (net.Interface, string, error) {
 		}
 	}
 	return net.Interface{}, "", errors.New("are you connected to the network?")
+}
+
+func FailSafeTimeOut(t time.Duration, timeout func() error) {
+	go func() {
+		time.Sleep(t)
+		timeout()
+		os.Exit(1)
+	}()
 }

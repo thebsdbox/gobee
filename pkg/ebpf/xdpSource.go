@@ -82,5 +82,7 @@ if err != nil {
 }
 defer l.Close()
 
+//ebpf.FailSafeTimeOut(time.Second * 5, l.Close)
+
 ebpf.Trace() // Blocking call that watches debug logs (ctrl+c to exit)
 `

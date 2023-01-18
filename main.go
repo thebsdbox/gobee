@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	// Create a new XDP object (name, license, debugging)
+	// Create a new XDP object (name, license, debugging)+
 	x, err := ebpf.NewXDP("Demo", "GPL", true)
 	if err != nil {
 		log.Fatalf("Error creating XDP object: %s", err)
@@ -32,4 +32,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 }
