@@ -82,5 +82,5 @@ if err != nil {
 }
 defer l.Close()
 
-ebpf.Trace()
+ebpf.Trace() // Blocking call that watches debug logs (ctrl+c to exit)
 `

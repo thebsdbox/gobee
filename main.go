@@ -16,7 +16,7 @@ func main() {
 	x.GetTCPSourcePort()
 	x.GetIPDestinationAddress()
 	x.GetIPSourceAddress()
-	x.AppendCode("bpf_printk(\"from %pI4, to %pI4:%d\", &saddress, &daddress, dport);")
+	x.AppendCode("bpf_printk(\"from %pI4, to %pI4:%d\", &saddress, &daddress, bpf_htons(dport));")
 	x.Create()
 
 	err = x.Generate(true)

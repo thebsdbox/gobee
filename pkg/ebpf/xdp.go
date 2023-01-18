@@ -105,18 +105,19 @@ func (x *XDP) GetTCPDestinationPort() {
 // This will generate actual eBPF code and associated wrappers, depends on GENERATE being set as an environment
 // variable, if set to true will also print the go wrapper to STDOUT
 func (x *XDP) Generate(printGo bool) error {
-	if !x.Builder.written {
-		err := x.Write()
-		if err != nil {
-			return err
-		}
-	}
-	if printGo {
-		fmt.Printf(xdpGoWrapper, x.name)
-
-	}
 	_, gen := os.LookupEnv("GENERATE")
 	if gen {
+		if !x.Builder.written {
+			err := x.Write()
+			if err != nil {
+				return err
+			}
+		}
+		if printGo {
+			fmt.Printf(xdpGoWrapper, x.name)
+
+		}
+
 		return x.Builder.Generate()
 	}
 	return nil
